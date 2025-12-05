@@ -14,9 +14,8 @@ import * as Yup from 'yup';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { collection, addDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuth } from '../../contexts/AuthContext';
-import { db, storage } from '../../config/firebase';
+import { db } from '../../config/firebase';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Card from '../../components/common/Card';
@@ -54,20 +53,12 @@ const AddExpenseScreen = ({ navigation }) => {
     onSubmit: async (values) => {
       setLoading(true);
       try {
-        let receiptUrl = null;
+        let receiptUri = null;
 
-        // Upload image/file if selected
+        // Store receipt URI locally (no upload to Firebase Storage)
         if (selectedImage || uploadedFile) {
           const fileToUpload = selectedImage || uploadedFile;
-          const fileName = `receipts/${user.uid}/${Date.now()}_${fileToUpload.fileName || 'receipt'}`;
-          const storageRef = ref(storage, fileName);
-          
-          // For React Native, we need to fetch the file as blob
-          const response = await fetch(fileToUpload.uri);
-          const blob = await response.blob();
-          
-          await uploadBytes(storageRef, blob);
-          receiptUrl = await getDownloadURL(storageRef);
+          receiptUri = fileToUpload.uri; // Just store the local URI
         }
 
         // Add expense to Firestore
@@ -75,14 +66,14 @@ const AddExpenseScreen = ({ navigation }) => {
           userId: user.uid,
           vendor: values.vendor,
           amount: parseFloat(values.amount),
-          date: values.date,
+          date: new Date(values.date),
           category: values.category,
           type: values.type,
           description: values.description,
           hasGST: values.hasGST,
           gstAmount: values.hasGST ? parseFloat(values.gstAmount || 0) : 0,
-          receiptUrl: receiptUrl,
-          createdAt: new Date().toISOString(),
+          receiptUrl: receiptUri, // Local URI instead of cloud URL
+          createdAt: new Date(),
         });
 
         Alert.alert('Success', 'Expense added successfully!');
@@ -104,7 +95,7 @@ const AddExpenseScreen = ({ navigation }) => {
     }
 
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       quality: 0.8,
       allowsEditing: true,
     });
@@ -124,7 +115,7 @@ const AddExpenseScreen = ({ navigation }) => {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       quality: 0.8,
       allowsEditing: true,
     });

@@ -7,9 +7,12 @@ import {
   TouchableOpacity,
   RefreshControl,
   Alert,
+  Image,
+  Modal,
 } from 'react-native';
 import { collection, query, where, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { format } from 'date-fns';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../config/firebase';
 import Card from '../../components/common/Card';
@@ -23,6 +26,7 @@ const ExpenseListScreen = ({ navigation }) => {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('all'); // all, personal, business, reimbursable
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const fetchExpenses = async () => {
     if (!user) return;
@@ -60,6 +64,34 @@ const ExpenseListScreen = ({ navigation }) => {
   useEffect(() => {
     fetchExpenses();
   }, [user, filter]);
+
+  // Refresh expenses when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (user) {
+        fetchExpenses();
+      }
+      return () => {};
+    }, [])
+  );
+
+  // Helper function to safely get date
+  const getDateFromExpense = (expense) => {
+    if (!expense.date) return new Date();
+    if (expense.date.toDate && typeof expense.date.toDate === 'function') {
+      return expense.date.toDate();
+    }
+    if (expense.date instanceof Date) {
+      return expense.date;
+    }
+    if (typeof expense.date === 'number') {
+      return new Date(expense.date);
+    }
+    if (typeof expense.date === 'string') {
+      return new Date(expense.date);
+    }
+    return new Date();
+  };
 
   const handleDelete = (expenseId) => {
     Alert.alert(
@@ -112,8 +144,13 @@ const ExpenseListScreen = ({ navigation }) => {
               <Text style={styles.expenseVendor}>{item.vendor}</Text>
               <Text style={styles.expenseCategory}>{category?.label}</Text>
               <Text style={styles.expenseDate}>
-                {format(new Date(item.date), 'MMM dd, yyyy')}
+                {format(getDateFromExpense(item), 'MMM dd, yyyy')}
               </Text>
+              {item.receiptUrl && (
+                <TouchableOpacity onPress={() => setSelectedImage(item.receiptUrl)}>
+                  <Text style={styles.viewReceipt}>📎 View Receipt</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
           <View style={styles.expenseRight}>
@@ -121,6 +158,16 @@ const ExpenseListScreen = ({ navigation }) => {
             <View style={styles.typeTag}>
               <Text style={styles.typeText}>{item.type}</Text>
             </View>
+            {item.receiptUrl && (
+              <TouchableOpacity 
+                style={styles.thumbnailContainer}
+                onPress={() => setSelectedImage(item.receiptUrl)}>
+                <Image 
+                  source={{ uri: item.receiptUrl }} 
+                  style={styles.thumbnail}
+                />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -200,6 +247,31 @@ const ExpenseListScreen = ({ navigation }) => {
           </View>
         }
       />
+
+      {/* Image Viewer Modal */}
+      <Modal
+        visible={selectedImage !== null}
+        transparent={true}
+        onRequestClose={() => setSelectedImage(null)}>
+        <View style={styles.modalContainer}>
+          <TouchableOpacity 
+            style={styles.modalCloseArea}
+            onPress={() => setSelectedImage(null)}>
+            <View style={styles.modalContent}>
+              <Image 
+                source={{ uri: selectedImage }} 
+                style={styles.fullImage}
+                resizeMode="contain"
+              />
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={() => setSelectedImage(null)}>
+                <Text style={styles.closeButtonText}>✕ Close</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -278,12 +350,26 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     marginTop: 2,
   },
+  viewReceipt: {
+    ...typography.caption,
+    color: colors.primary,
+    marginTop: 4,
+  },
   expenseRight: {
     alignItems: 'flex-end',
   },
   expenseAmount: {
     ...typography.h6,
     color: colors.text,
+  },
+  thumbnailContainer: {
+    marginTop: spacing.xs,
+  },
+  thumbnail: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    backgroundColor: colors.surface,
   },
   typeTag: {
     backgroundColor: colors.primary + '20',
@@ -325,6 +411,41 @@ const styles = StyleSheet.create({
     ...typography.body2,
     color: colors.textLight,
     marginTop: spacing.xs,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseArea: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    height: '80%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullImage: {
+    width: '100%',
+    height: '100%',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: 20,
+  },
+  closeButtonText: {
+    ...typography.button,
+    color: colors.surface,
   },
 });
 

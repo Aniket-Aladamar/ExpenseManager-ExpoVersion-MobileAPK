@@ -7,10 +7,13 @@ import {
   TouchableOpacity,
   Dimensions,
   RefreshControl,
+  Image,
+  Modal,
 } from 'react-native';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { LineChart, PieChart } from 'react-native-chart-kit';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../config/firebase';
 import Card from '../../components/common/Card';
@@ -25,6 +28,7 @@ const DashboardScreen = ({ navigation }) => {
   const { user } = useAuth();
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
   const [stats, setStats] = useState({
     totalThisMonth: 0,
     totalExpenses: 0,
@@ -37,14 +41,10 @@ const DashboardScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      const startDate = startOfMonth(new Date());
-      const endDate = endOfMonth(new Date());
-
+      // Fetch all expenses for the user
       const q = query(
         collection(db, 'expenses'),
         where('userId', '==', user.uid),
-        where('date', '>=', startDate.toISOString()),
-        where('date', '<=', endDate.toISOString()),
         orderBy('date', 'desc')
       );
 
@@ -63,12 +63,21 @@ const DashboardScreen = ({ navigation }) => {
   };
 
   const calculateStats = (expensesData) => {
-    const totalThisMonth = expensesData.reduce((sum, exp) => sum + exp.amount, 0);
+    // Filter expenses for this month only for the stats
+    const startDate = startOfMonth(new Date());
+    const endDate = endOfMonth(new Date());
+    
+    const thisMonthExpenses = expensesData.filter(exp => {
+      const expenseDate = getDateFromExpense(exp);
+      return expenseDate >= startDate && expenseDate <= endDate;
+    });
+
+    const totalThisMonth = thisMonthExpenses.reduce((sum, exp) => sum + exp.amount, 0);
     const reimbursable = expensesData
       .filter((exp) => exp.type === 'reimbursable')
       .reduce((sum, exp) => sum + exp.amount, 0);
 
-    // Category breakdown
+    // Category breakdown (all time)
     const categoryTotals = {};
     expensesData.forEach((exp) => {
       if (categoryTotals[exp.category]) {
@@ -100,6 +109,34 @@ const DashboardScreen = ({ navigation }) => {
   useEffect(() => {
     fetchExpenses();
   }, [user]);
+
+  // Refresh dashboard when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (user) {
+        fetchExpenses();
+      }
+      return () => {};
+    }, [])
+  );
+
+  // Helper function to safely get date
+  const getDateFromExpense = (expense) => {
+    if (!expense.date) return new Date();
+    if (expense.date.toDate && typeof expense.date.toDate === 'function') {
+      return expense.date.toDate();
+    }
+    if (expense.date instanceof Date) {
+      return expense.date;
+    }
+    if (typeof expense.date === 'number') {
+      return new Date(expense.date);
+    }
+    if (typeof expense.date === 'string') {
+      return new Date(expense.date);
+    }
+    return new Date();
+  };
 
   const chartConfig = {
     backgroundColor: colors.surface,
@@ -194,11 +231,28 @@ const DashboardScreen = ({ navigation }) => {
                   <View>
                     <Text style={styles.expenseVendor}>{expense.vendor}</Text>
                     <Text style={styles.expenseDate}>
-                      {format(new Date(expense.date), 'MMM dd, yyyy')}
+                      {format(getDateFromExpense(expense), 'MMM dd, yyyy')}
                     </Text>
+                    {expense.receiptUrl && (
+                      <TouchableOpacity onPress={() => setSelectedImage(expense.receiptUrl)}>
+                        <Text style={styles.viewReceipt}>📎 View Receipt</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </View>
-                <Text style={styles.expenseAmount}>${expense.amount.toFixed(2)}</Text>
+                <View style={styles.expenseRight}>
+                  <Text style={styles.expenseAmount}>${expense.amount.toFixed(2)}</Text>
+                  {expense.receiptUrl && (
+                    <TouchableOpacity 
+                      style={styles.thumbnailContainer}
+                      onPress={() => setSelectedImage(expense.receiptUrl)}>
+                      <Image 
+                        source={{ uri: expense.receiptUrl }} 
+                        style={styles.thumbnail}
+                      />
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
             </Card>
           );
@@ -213,6 +267,31 @@ const DashboardScreen = ({ navigation }) => {
           <Text style={styles.actionButtonText}>+ Add Expense</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Image Viewer Modal */}
+      <Modal
+        visible={selectedImage !== null}
+        transparent={true}
+        onRequestClose={() => setSelectedImage(null)}>
+        <View style={styles.modalContainer}>
+          <TouchableOpacity 
+            style={styles.modalCloseArea}
+            onPress={() => setSelectedImage(null)}>
+            <View style={styles.modalContent}>
+              <Image 
+                source={{ uri: selectedImage }} 
+                style={styles.fullImage}
+                resizeMode="contain"
+              />
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={() => setSelectedImage(null)}>
+                <Text style={styles.closeButtonText}>✕ Close</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -318,9 +397,61 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
+  viewReceipt: {
+    ...typography.caption,
+    color: colors.primary,
+    marginTop: 4,
+  },
+  expenseRight: {
+    alignItems: 'flex-end',
+  },
   expenseAmount: {
     ...typography.h6,
     color: colors.text,
+  },
+  thumbnailContainer: {
+    marginTop: spacing.xs,
+  },
+  thumbnail: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    backgroundColor: colors.surface,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseArea: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    height: '80%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullImage: {
+    width: '100%',
+    height: '100%',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: 20,
+  },
+  closeButtonText: {
+    ...typography.button,
+    color: colors.surface,
   },
   quickActions: {
     padding: spacing.lg,
