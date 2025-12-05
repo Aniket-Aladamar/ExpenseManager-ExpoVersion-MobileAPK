@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "ExpenseManagerExpo",
-    "slug": "ExpenseManagerExpo",
+    "name": "Expense Manager",
+    "slug": "expense-manager",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -10,20 +10,35 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#3B82F6"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.expensemanager.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#3B82F6"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.expensemanager.app",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "firebaseApiKey": "AIzaSyBvF_f7DzkIHKwPViynbm6rNtz0Fj7FXxg",
+      "firebaseAuthDomain": "final-project-1f9b7.firebaseapp.com",
+      "firebaseProjectId": "final-project-1f9b7",
+      "firebaseStorageBucket": "final-project-1f9b7.firebasestorage.app",
+      "firebaseMessagingSenderId": "318113610980",
+      "firebaseAppId": "1:318113610980:web:c37efb1ea6f035be5d40f1"
     }
   }
 }
