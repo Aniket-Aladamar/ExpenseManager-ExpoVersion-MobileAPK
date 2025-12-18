@@ -154,7 +154,7 @@ const ExpenseListScreen = ({ navigation }) => {
             </View>
           </View>
           <View style={styles.expenseRight}>
-            <Text style={styles.expenseAmount}>${item.amount.toFixed(2)}</Text>
+            <Text style={styles.expenseAmount}>₹{item.amount.toFixed(2)}</Text>
             <View style={styles.typeTag}>
               <Text style={styles.typeText}>{item.type}</Text>
             </View>

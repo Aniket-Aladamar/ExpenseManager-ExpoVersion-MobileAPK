@@ -297,21 +297,21 @@ const ReportsScreen = ({ navigation }) => {
             ` : `
             <div class="summary-row">
               <span class="summary-label">Personal:</span>
-              <span>$${stats.personal.toFixed(2)}</span>
+              <span>₹${stats.personal.toFixed(2)}</span>
             </div>
             <div class="summary-row">
               <span class="summary-label">Business:</span>
-              <span>$${stats.business.toFixed(2)}</span>
+              <span>₹${stats.business.toFixed(2)}</span>
             </div>
             <div class="summary-row">
               <span class="summary-label">Reimbursable:</span>
-              <span>$${stats.reimbursable.toFixed(2)}</span>
+              <span>₹${stats.reimbursable.toFixed(2)}</span>
             </div>
             `}
             <div class="summary-total">
               <div class="summary-row">
                 <span>${isClaimReport ? 'Total Claim Amount:' : 'Total Amount:'}</span>
-                <span>$${totalAmount.toFixed(2)}</span>
+                <span>₹${totalAmount.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -330,13 +330,13 @@ const ReportsScreen = ({ navigation }) => {
                     <span style="margin-left: 10px; color: #666;">${expense.type}</span>
                   </div>
                   <div style="text-align: right;">
-                    <strong style="font-size: 20px; color: #059669;">$${expense.amount.toFixed(2)}</strong>
+                    <strong style="font-size: 20px; color: #059669;">₹${expense.amount.toFixed(2)}</strong>
                     <br/>
                     <span style="color: #666;">${format(expenseDate, 'MMM dd, yyyy')}</span>
                   </div>
                 </div>
                 ${expense.description ? `<p style="margin: 10px 0; color: #666;"><strong>Description:</strong> ${expense.description}</p>` : ''}
-                ${expense.hasGST ? `<p style="margin: 10px 0; color: #666;"><strong>GST Amount:</strong> $${(expense.gstAmount || 0).toFixed(2)}</p>` : ''}
+                ${expense.hasGST ? `<p style="margin: 10px 0; color: #666;"><strong>GST Amount:</strong> ₹${(expense.gstAmount || 0).toFixed(2)}</p>` : ''}
                 ${expense.receiptBase64 ? `
                   <div style="margin-top: 15px;">
                     <p style="margin: 5px 0; color: #3B82F6;"><strong>📎 Receipt Attached</strong></p>
@@ -369,7 +369,7 @@ const ReportsScreen = ({ navigation }) => {
                 return `
                   <tr>
                     <td><span class="category">${category?.label || catId}</span></td>
-                    <td class="amount">$${amount.toFixed(2)}</td>
+                    <td class="amount">₹${amount.toFixed(2)}</td>
                     <td>${percentage}%</td>
                   </tr>
                 `;
@@ -461,20 +461,20 @@ const ReportsScreen = ({ navigation }) => {
       <View style={styles.summarySection}>
         <Card style={styles.summaryCard}>
           <Text style={styles.summaryLabel}>Total Expenses</Text>
-          <Text style={styles.summaryAmount}>${stats.total.toFixed(2)}</Text>
+          <Text style={styles.summaryAmount}>₹{stats.total.toFixed(2)}</Text>
         </Card>
 
         <View style={styles.summaryRow}>
           <Card style={styles.smallCard}>
             <Text style={styles.summaryLabel}>Personal</Text>
             <Text style={[styles.summaryAmount, styles.smallAmount]}>
-              ${stats.personal.toFixed(2)}
+              ₹{stats.personal.toFixed(2)}
             </Text>
           </Card>
           <Card style={styles.smallCard}>
             <Text style={styles.summaryLabel}>Business</Text>
             <Text style={[styles.summaryAmount, styles.smallAmount]}>
-              ${stats.business.toFixed(2)}
+              ₹{stats.business.toFixed(2)}
             </Text>
           </Card>
         </View>
@@ -482,7 +482,7 @@ const ReportsScreen = ({ navigation }) => {
         <Card style={[styles.summaryCard, { backgroundColor: colors.secondary + '10' }]}>
           <Text style={styles.summaryLabel}>Reimbursable</Text>
           <Text style={[styles.summaryAmount, { color: colors.secondary }]}>
-            ${stats.reimbursable.toFixed(2)}
+            ₹{stats.reimbursable.toFixed(2)}
           </Text>
         </Card>
       </View>
@@ -508,7 +508,7 @@ const ReportsScreen = ({ navigation }) => {
                   <Text style={styles.categoryName}>{category?.label || catId}</Text>
                 </View>
                 <View style={styles.categoryRight}>
-                  <Text style={styles.categoryAmount}>${amount.toFixed(2)}</Text>
+                  <Text style={styles.categoryAmount}>₹{amount.toFixed(2)}</Text>
                   <Text style={styles.categoryPercentage}>{percentage}%</Text>
                 </View>
               </View>
@@ -559,7 +559,7 @@ const ReportsScreen = ({ navigation }) => {
         <Card style={styles.claimCard}>
           <View style={styles.claimRow}>
             <Text style={styles.claimLabel}>Total Reimbursable Expenses:</Text>
-            <Text style={styles.claimAmount}>${stats.reimbursable.toFixed(2)}</Text>
+            <Text style={styles.claimAmount}>₹{stats.reimbursable.toFixed(2)}</Text>
           </View>
           <View style={styles.claimRow}>
             <Text style={styles.claimLabel}>Number of Items:</Text>

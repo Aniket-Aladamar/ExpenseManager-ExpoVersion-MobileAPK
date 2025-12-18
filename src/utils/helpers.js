@@ -38,14 +38,14 @@ export const getLastMonthsRange = (months = 1) => {
 /**
  * Format currency
  */
-export const formatCurrency = (amount, currency = 'USD') => {
+export const formatCurrency = (amount, currency = 'INR') => {
   try {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: currency,
     }).format(amount);
   } catch (error) {
-    return `$${amount.toFixed(2)}`;
+    return `₹${amount.toFixed(2)}`;
   }
 };
 

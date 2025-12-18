@@ -163,7 +163,7 @@ const DashboardScreen = ({ navigation }) => {
       <View style={styles.summaryRow}>
         <Card style={styles.summaryCard}>
           <Text style={styles.summaryLabel}>Total Spent</Text>
-          <Text style={styles.summaryAmount}>${stats.totalThisMonth.toFixed(2)}</Text>
+          <Text style={styles.summaryAmount}>₹{stats.totalThisMonth.toFixed(2)}</Text>
         </Card>
         <Card style={styles.summaryCard}>
           <Text style={styles.summaryLabel}>Expenses</Text>
@@ -174,7 +174,7 @@ const DashboardScreen = ({ navigation }) => {
       <Card style={styles.summaryCardFull}>
         <Text style={styles.summaryLabel}>Reimbursable</Text>
         <Text style={[styles.summaryAmount, { color: colors.secondary }]}>
-          ${stats.reimbursable.toFixed(2)}
+          ₹{stats.reimbursable.toFixed(2)}
         </Text>
       </Card>
 
@@ -241,7 +241,7 @@ const DashboardScreen = ({ navigation }) => {
                   </View>
                 </View>
                 <View style={styles.expenseRight}>
-                  <Text style={styles.expenseAmount}>${expense.amount.toFixed(2)}</Text>
+                  <Text style={styles.expenseAmount}>₹{expense.amount.toFixed(2)}</Text>
                   {expense.receiptUrl && (
                     <TouchableOpacity 
                       style={styles.thumbnailContainer}

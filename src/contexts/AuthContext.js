@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }) => {
         displayName: displayName,
         createdAt: new Date().toISOString(),
         monthlyBudget: 0,
-        currency: 'USD',
+        currency: 'INR',
       });
 
       return { success: true };
