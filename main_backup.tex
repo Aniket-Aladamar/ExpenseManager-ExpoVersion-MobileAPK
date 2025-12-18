@@ -1,0 +1,443 @@
+\documentclass[12pt,a4paper]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage{float}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+
+\usepackage[style=apa, backend=biber]{biblatex}
+\usepackage[
+    backend=biber,
+    style=apa,   % or ieee, numeric, authoryear, etc.
+    sorting=ynt  % sort by year, name, title
+]{biblatex}
+
+
+% Double spacing
+\linespread{1.2}
+
+% Chapter title formatting
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries\centering}{\chaptername\ \thechapter}{20pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{50pt}{40pt}
+
+\begin{document}
+
+% Title page
+\begin{titlepage}
+    \centering
+    % Example: University logo can go here
+    \includegraphics[width=0.3\textwidth]{media/Unilogo.png}\\[0.5cm]
+    {\Large\bfseries RV University}\\[0.2cm]
+    {\Large\bfseries School of Computer Science and Engineering}\\[1cm]
+
+    {\Huge\bfseries ExpenseFlow: Smart Expense Management Mobile Application}\\[1.5cm]
+    {\Large B.Tech Computer Science}\\[0.2cm]
+    {\large Submitted by}\\[0.5cm]
+    Aniket Aladamar - 1RVU22CSE026\\[0.2cm]
+    Deekshith R Prabhu - 1RVU22CSE046\\[1.5cm]
+
+    {\large Under the Guidance of}\\[0.5cm]
+    {\Large Prof. Rajeshwari Adrakatti}\\[0.3cm]
+    Professor\\
+    School of Computer Science and Engineering\\
+    RV University, Bengaluru - 560059\\[1.5cm]
+    {\large Academic Year 2025-2026}
+\end{titlepage}
+
+
+
+% Certificate
+\chapter*{Certificate}
+\addcontentsline{toc}{chapter}{Certificate}
+
+\vspace{1cm}
+
+Certified that the project work titled \textbf{``ExpenseFlow: Smart Expense Management Mobile Application''} is carried out by \textbf{Aniket Aladamar} (1RVU22CSE026) and \textbf{Deekshith R Prabhu} (1RVU22CSE046), students of B.Tech in the School of Computer Science and Engineering at RV University, Bengaluru during the academic year 2025-2026. It is certified that all corrections/suggestions indicated for the Internal Assessment have been incorporated in the project report. The Project report has been approved as it satisfies the academic requirements in respect of project work prescribed by the institution.
+
+\vspace{3cm}
+
+\textbf{Signature of Guide}\\
+Prof. Rajeshwari Adrakatti
+
+\vspace{3cm}
+
+\textbf{External Viva:}
+\vspace{1cm}
+
+\begin{tabular}{p{6cm} p{6cm}}
+\textbf{Name of Examiners} & \textbf{Signature with Date} \\
+& \\
+\textbf{1} & \\
+& \\
+\textbf{2} & \\
+& \\
+\end{tabular}
+
+
+\vspace{1.5cm}
+
+
+% Declaration
+\chapter*{Declaration}
+\addcontentsline{toc}{chapter}{Declaration}
+
+\vspace{1cm}
+
+We, \textbf{Aniket Aladamar} and \textbf{Deekshith R Prabhu}, students of seventh semester B.Tech, School of Computer Science and Engineering, RV University, Bengaluru, hereby declare that the project titled ``\textbf{ExpenseFlow: Smart Expense Management Mobile Application}'' has been carried out by us and submitted in partial fulfillment of \textbf{Bachelor of Technology in School of Computer Science and Engineering} during the academic year 2025-26.
+
+\vspace{1cm}
+
+Further, we declare that the content of the report has not been submitted previously by anybody or to any other university.
+
+\vspace{1cm}
+
+We also declare that any Intellectual Property Rights generated out of this project carried out at RV University will be the property of RV University, Bengaluru, and we will be one of the authors of the same.
+
+\vspace{2cm}
+
+\textbf{Place:} Bengaluru \\
+\textbf{Date:}
+
+\vspace{2cm}
+
+\begin{tabular}{l l}
+\textbf{Name} \hspace{10cm} & \textbf{Signature} \\
+1. \textbf{Aniket Aladamar (1RVU22CSE026)} & \\
+2. \textbf{Deekshith R Prabhu (1RVU22CSE046)} & \\
+\end{tabular}
+
+
+
+% Acknowledgement
+\chapter*{Acknowledgement}
+\addcontentsline{toc}{chapter}{Acknowledgement}
+
+It is a great pleasure for us to acknowledge the assistance and support of many individuals who have been responsible for the successful completion of this project.\\[0.5cm]
+
+First, we take this opportunity to express our sincere gratitude to the School of Computer Science and Engineering, RV University, for providing us with a great opportunity to pursue our bachelor's degree in this institution.\\[0.5cm]
+
+A special thanks to our Program Director, \textbf{Dr. Sudhakar K. N} and Dean - \textbf{Dr. Shobha G}, for their continuous support and providing the necessary facilities with guidance to carry out the project work.\\[0.5cm]
+
+We would like to express our heartfelt gratitude to our guide, \textbf{Prof. Rajeshwari Adrakatti}, School of Computer Science and Engineering, RV University, for her valuable time, guidance, and support throughout every step of our project work, which paved the way for smooth progress and fruitful culmination of the project.\\[0.5cm]
+
+We are also grateful to our family and friends who provided us with every requirement throughout the course.\\[0.5cm]
+
+We would like to thank one and all who directly or indirectly helped us in the Project work.
+
+\vspace{3cm}
+
+\begin{flushright}
+\textit{Aniket Aladamar}\\
+\textit{Deekshith R Prabhu}
+\end{flushright}
+
+
+% Abstract
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+In today's fast-paced digital world, effective personal finance management has become increasingly important. ExpenseFlow is a comprehensive mobile application developed using React Native and Expo, designed to help users track, manage, and analyze their expenses efficiently. The application provides an intuitive interface for recording daily transactions, categorizing expenses, and visualizing spending patterns through interactive charts and reports.
+
+The system leverages Firebase as its backend infrastructure, utilizing Firebase Authentication for secure user management, Firestore for real-time data synchronization, and Firebase Storage for managing receipt images and documents. The application implements a robust navigation system using React Navigation, ensuring seamless transitions between different screens including dashboard, expense tracking, profile management, and detailed analytics.
+
+Key features of ExpenseFlow include user authentication with email/password and social login options, real-time expense tracking with customizable categories, budget management with alerts and notifications, visual analytics through charts and graphs, receipt capture and storage, and export functionality for financial reports. The application follows modern mobile development practices with a component-based architecture, ensuring code reusability and maintainability.
+
+The project demonstrates the effective integration of cloud services with mobile development frameworks, providing users with a reliable and accessible platform for managing their financial health. Through this application, users can gain better insights into their spending habits, set financial goals, and make informed decisions about their money management.
+
+\textbf{Keywords:} Mobile Application, Expense Management, React Native, Firebase, Personal Finance, Budget Tracking, Data Visualization, Cloud Integration, User Authentication, Financial Analytics.
+
+
+% Table of Contents, List of Tables, List of Figures
+\tableofcontents
+\listoftables
+\listoffigures
+
+%------------------ MAIN CHAPTERS ------------------
+
+\chapter{Introduction}
+\section{General Introduction}
+Personal finance management is a critical skill in modern life, yet many individuals struggle to maintain accurate records of their expenses and understand their spending patterns. Traditional methods of expense tracking, such as manual ledgers or spreadsheets, are time-consuming and prone to errors. With the widespread adoption of smartphones, mobile applications have emerged as powerful tools for simplifying financial management tasks.
+
+ExpenseFlow is a mobile application designed to address the challenges of personal expense management through an intuitive, feature-rich platform. Built using React Native and Expo, the application provides cross-platform compatibility, ensuring users can access their financial data seamlessly across both iOS and Android devices. The application leverages cloud-based Firebase services to offer real-time data synchronization, secure authentication, and reliable data storage.
+
+The need for such applications has grown significantly as individuals seek better control over their finances, especially in the context of rising living costs and the complexity of modern spending patterns. Traditional banking apps often lack the granular categorization and visualization features that users need to truly understand where their money goes. ExpenseFlow fills this gap by providing detailed expense categorization, visual analytics, budget tracking, and personalized insights.
+
+The application architecture follows modern mobile development best practices, implementing a component-based structure that ensures scalability and maintainability. The use of React Context API for state management provides efficient data flow throughout the application, while Firebase integration ensures data persistence and synchronization across devices. The user interface is designed with accessibility and user experience in mind, featuring a clean, modern design that makes financial management approachable for users of all technical backgrounds.
+
+Through ExpenseFlow, users can capture receipts, categorize transactions, set budget limits, receive alerts when approaching spending thresholds, and generate comprehensive reports to analyze their financial health. This project demonstrates the practical application of mobile development technologies in solving real-world problems and improving users' financial literacy and management capabilities.
+
+\section{Literature Survey}
+The development of mobile expense management applications has been an active area of research and commercial development. Various studies have explored different approaches to personal finance management, user experience design, and the integration of cloud services with mobile platforms.
+
+Recent research in mobile finance applications has highlighted the importance of user-centered design and the psychological aspects of spending behavior. Studies have shown that visual feedback and categorization significantly improve users' awareness of their spending patterns. The integration of cloud services has become a standard practice, with Firebase emerging as a popular choice due to its comprehensive suite of tools including authentication, real-time database, and cloud storage.
+
+Cross-platform mobile development frameworks like React Native have gained significant traction in the industry due to their ability to maintain a single codebase for multiple platforms while delivering near-native performance. Research comparing native and cross-platform development approaches has demonstrated that React Native provides an optimal balance between development efficiency and application performance, particularly for data-driven applications like expense trackers.
+
+Security and privacy considerations in financial applications have been extensively studied, with authentication mechanisms and data encryption being critical components. Firebase Authentication provides industry-standard security protocols, including secure password hashing and token-based authentication, which align with best practices identified in academic literature.
+
+Data visualization techniques for financial data have evolved significantly, with studies emphasizing the importance of clear, actionable insights. Interactive charts and graphs have been shown to improve user engagement and financial decision-making. The implementation of such features in mobile applications requires careful consideration of mobile screen constraints and touch interactions.
+
+The literature also highlights the importance of offline functionality and data synchronization in mobile applications. Firebase's offline persistence capabilities address this requirement, ensuring users can access and modify their data even without internet connectivity, with automatic synchronization when connectivity is restored.
+
+\section{Problem Statement}
+
+
+\begin{longtable}{|>{\hspace{0.5em}}p{0.35\textwidth}<{\hspace{0.5em}}|
+                  >{\hspace{0.5em}}p{0.45\textwidth}<{\hspace{0.5em}}|
+                  >{\hspace{0.5em}}p{0.2\textwidth}<{\hspace{0.5em}}|}
+
+\hline
+\textbf{Title \& Authors} & \textbf{Summary} & \textbf{Indexing (SCIE/SSCI)} \\
+\hline
+NDVI Threshold-Based Urban Green Space Mapping from Sentinel-2A at the Local Governmental Area (LGA) Level of Victoria, Australia (Aryal et al.) 
+& Presents a hierarchical mapping of urban green space using NDVI thresholds; establishes indices like UGSI and PCGS; uses Sentinel-2A and Google Earth Engine. 
+& SCIE (Land) \\
+\hline
+Quantifying green cover change for sustainable urban planning: A case of Kuala Lumpur, Malaysia (Kanniah) 
+& Assesses green cover dynamics in KL with Landsat, especially before/after a city greening program; highlights regulation and reforestation opportunities. 
+& SCIE/SSCI (Urban Forestry \& Urban Greening) \\
+\hline
+On the Use of Sentinel-2 NDVI Time Series and Google Earth Engine to Detect Land-Use/Land-Cover Changes in Fire-Affected Areas (Lasaponara et al.) 
+& Leverages NDVI time series, regression, and random forest to detect fine-scale land cover changes post-fire; confirms accuracy and trends in Italian regions. 
+& SCIE (Remote Sensing) \\
+\hline
+Predicting land use and land cover changes for sustainable land management using CA-Markov modelling and GIS techniques (Tahir et al.) 
+& Applies CA-Markov and GIS on satellite data to forecast LULC trends in Lahore; finds rapid urbanization and shrinking vegetation/barren land. 
+& SCIE (Scientific Reports) \\
+\hline
+A Satellite Imagery Dataset for Long-Term Sustainable Development in United States Cities (Xi et al.) 
+& Offers a broad, multi-year satellite imagery dataset for 100 US cities across five SDGs, targeting multi-indicator, multi-scale urban sustainability studies. 
+& SCIE (Scientific Data) \\
+\hline
+Chapter 8 - Mapping the NDVI and monitoring of its changes using Google Earth Engine and Sentinel-2 images (Amiri \& Pourghasemi) 
+& Focuses on temporal-spatial NDVI analysis in the Doroudzan Dam Watershed, using GEE codes and Sentinel-2; demonstrates observed seasonal vegetation variations. 
+& Book chapter (Elsevier); Not SCIE/SSCI \\
+\hline
+Assessing changes in urban vegetation using NDVI for epidemiological studies (Davis et al.) 
+& Uses NDVI thresholds and cluster analysis to track vegetation trends in Vancouver, linking findings to public health and urban planning. 
+& SCIE/SSCI (Urban Forestry \& Urban Greening) \\
+\hline
+Quantifying the process of lake encroachment from the perspective of satellite remote sensing (Jiang et al.) 
+& Develops a framework using random forest and time series to detect and quantify urban lake encroachment, tested on Zhushan Lake. 
+& SCIE (Ecological Indicators) \\
+\hline
+Spatio-temporal dynamics of urbanization and environmental sustainability: A predictive modelling approach to forecasting land use transitions in Vellore, India (Vijayaraghavalu et al.) 
+& Combines satellite data, machine learning, and climate projections for urban/forest/agricultural transitions in Vellore, highlighting urban expansion and climate risks. 
+& SCIE (Results in Engineering) \\
+\hline
+Role of green space in urban planning: Outlook towards smart cities (Anguluri \& Narayanan) 
+& Proposes a Green Index for cities and demonstrates LST-green cover correlation for smart urban planning using Gulbarga as a case. 
+& SCIE/SSCI (Urban Forestry \& Urban Greening) \\
+\hline
+Review of environmental monitoring in freshwater lakes using geospatial techniques (Kamaruzzaman et al.) 
+& Reviews remote sensing and GIS applications in monitoring lake environments; covers advances and challenges in geospatial lake assessment. 
+& SCIE (Geocarto International) \\
+\hline
+Bangalore Lakes Information System (BLIS) for Sustainable Management of Lakes (Ramachandra et al.) 
+& Describes BLIS, an informatics platform integrating lake data for conservation and policy of Bangalore’s lakes amidst rapid urbanization. 
+& SCIE (Journal of the Indian Institute of Science) \\
+\hline
+A Review of AI for Urban Planning: Towards Building Sustainable Smart Cities (Jha et al.) 
+& Reviews the applications and possibilities of AI and IoT for smart urban planning and sustainable city management. 
+& Conference proceedings; Not SCIE/SSCI \\
+\hline
+Utilizing multitemporal indices and spectral bands of Sentinel-2 to enhance land use and land cover classification (Arfa \& Minaei) 
+& Shows improved LULC classification accuracy using multitemporal Sentinel-2 features with SVM and random forest in Urmia Lake Basin. 
+& SCIE (Advances in Space Research) \\
+\hline
+A commentary review on the use of normalized difference vegetation index (NDVI) in the era of popular remote sensing (Huang et al.) 
+& Discusses NDVI fundamentals, uses, and limitations; urges robust user education to ensure reliable vegetation analysis from remote sensing. 
+& SCIE (Journal of Forestry Research) \\
+\hline
+\caption{Representative Literature Summary Table }\\
+\end{longtable}
+
+
+\subsection{Problem Statement}
+Urbanization and evolving land-use patterns are placing pressures on vegetation cover and freshwater ecosystems, thus requiring continuous monitoring of environmental and ecological indicators. Existing processes to assess ecological indicators such as the Green Cover Index (GCI) and lake buffer compliance (e.g. municipal lake buffers) are currently splintered, labour-intensive and complex for non-expert users. Remote sensing has provided great value to collect and utilize this much-needed data; however, it is not consistent in the availability of integrated tools and facilities that allow scientists to manipulate and convert these complex data into easily interpretable user-friendly automated predictive models. Consequently, there exists a need for a systematic scalable solution that builds on geospatial analysis using satellite imagery and complex machine learning techniques to help support environmental and sustainability planning within land-use and environmental policy.
+
+\subsection*{Objectives}
+\begin{itemize}
+ \item Map-based marking and property selection.
+ \item Automated buffer computation as per BBMP rules.
+ \item NDVI and GCI evaluation (present and historical).
+ \item 10-year vegetative trend forecasting.
+ \item Regulatory data integration and report generation.
+\end{itemize}
+
+\chapter{System Design}
+\section{System Architecture}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{system-architecture.jpeg} % Insert your actual diagram
+\caption{System Architecture}
+\label{fig:system-architecture} 
+\end{figure}
+
+
+The proposed system combines client-side interactions, a Flask-based backend, analyzers, and external geospatial services (Google Earth Engine and Google Maps API) to allow for automated analyses of green cover indices (GCI), NDVI-based vegetation mappings, and reports. The system workflow is illustrated
+in Figure~\ref{fig:system-architecture}.
+
+\subsection{Client Layer}
+The client has a browser-based user interface where users input polygon coordinates for the spatial analysis. The input is sent to the Flask server via an \texttt{HTTP POST} request \texttt{(e.g. /search)}. The Google Maps JavaScript API allows for mapping, geolocation, and polygon drawing. If the API key is configured incorrectly \texttt{(e.g., config.js)}, map services will not work.
+
+\subsection{Server Layer}
+The server consists of two interconnected components: the Flask backend and the analysis worker.
+
+\begin{itemize}
+    \item \textbf{Flask Backend:} This part handles API queries, pulls polygon coordinates from clients, and writes the coordinates to the intermediate
+\texttt{coordinates.csv file}. It also makes asynchronous subprocess calls for the analysis.
+    \item \textbf{Analysis Worker:} It carries out the primary geospatial analysis housed in the
+the \texttt{model.py} module. This module pulls Sentinel-2 data from Google Earth Engine and uses it to derive NDVI/GCI statistics. It generates several outputs, which include:
+    \begin{enumerate}
+        \item \texttt{historical\_gci.png} – past vegetation trends visualized.
+        \item \texttt{predicted\_gci.png} – predicted future dynamics of green cover.
+        \item \texttt{report.docx} – an auto-generated report collating statistical results and graphics.
+        \item \texttt{output\_lake.csv} –  lake or region-specific metrics processed.
+    \end{enumerate}
+\end{itemize}
+
+\subsection{External Services Integration}
+The system relies on two major external services:
+\begin{itemize}
+    \item \textbf{Google Earth Engine (GEE):} Provides access to multi-temporal 
+    Sentinel-2 satellite data and supports NDVI/GCI computation. Authentication or 
+    initialization errors in GEE disrupt data retrieval.
+    \item \textbf{Google Maps JavaScript API:} Enables spatial visualization, polygon 
+    annotation, and contextual map overlays (Maps, Places). 
+\end{itemize}
+
+\subsection{Core Workflow Concepts}
+The architecture is governed by several key design principles:
+\begin{enumerate}
+    \item \textbf{Asynchronous Processing:} Long-running geospatial computations are 
+    decoupled from direct client requests via async subprocesses, improving user experience.
+    \item \textbf{Intermediate Data Exchange:} CSV files (\texttt{coordinates.csv}, 
+    \texttt{output\_lake.csv}) serve as the communication medium between system modules.
+    \item \textbf{Automation of Analysis:} The workflow automatically produces historical, 
+    predictive, and reporting outputs with minimal manual intervention.
+    \item \textbf{Extensibility:} The modular separation between client, server, and 
+    external services supports flexible upgrades (e.g., alternative APIs or new datasets).
+\end{enumerate}
+
+This architecture effectively combines web-based interactivity, 
+remote sensing data analysis, and automated reporting to support 
+urban environmental monitoring and decision-making.
+
+
+
+\chapter{Software Requirements}
+\section{Functional Requirements}
+\begin{itemize}
+ \item GIS polygon marking.
+ \item Green index and trend charting.
+ \item Compliance validation.
+ \item Automated reporting.
+\end{itemize}
+
+\section{Non-Functional Requirements}
+\begin{itemize}
+ \item Cloud scalability and reliability.
+ \item Async remote sensing requests.
+ \item Data privacy for users.
+\end{itemize}
+
+\section{Hardware Requirements}
+Standard developer machine or cloud VM.
+
+\section{Software Requirements}
+\begin{itemize}
+    \item \textbf{Frontend:} HTML, CSS, JavaScript, Google Maps API
+    \item \textbf{Backend:} Node.js, Flask
+    \item \textbf{Analytics:} Google Earth Engine API
+\end{itemize}
+
+
+
+\chapter{Implementation and Testing}
+
+
+\chapter{Conclusion and Future Work}
+\section*{Conclusion}
+In this research, we describe the development of a web-based decision-support tool that employs remote sensing, geospatial analytics, and automated reporting to quantify the Green Cover Index (GCI) and proximity to lakes for user-defined land parcels. Combining a Flask-based web interface with backend analytical workflows, the system successfully activates user engagement with sophisticated geospatial processing. Using Google Earth Engine, the decision-support tool offers accurate calculations of historical GCI using Sentinel-2 satellite imagery, as well as predictive insights for GCI conditions in subsequent years using regression models. The addition of compliance analysis for lake buffer zones enhances the tool's utility for urban planning and ecological monitoring. The automatic generation of reports that provide visualizations and spatial statistics guarantee usability for a range of end-users including policymakers, researchers, and practitioners. Ultimately, this project highlights the benefits of cloud-based geospatial technologies and their powers to offer scalable, accessible, and reproducible solutions for sustainable land management and environmental governance.
+
+
+
+
+\section*{Future Work}
+In the foreseeable future, this framework can be extended by applying the same methodology to other machine learning and deep learning models. This expansion will allow us to assess the impact and overall efficacy and efficiency of our methodology across several architectures. We can also generate the results from these models into a comparative paper that will reflect the advantages, disadvantages, and trade-offs of the other models. This would give us further understanding of the models themselves regarding performance, scalability, and fit for the application. 
+
+
+% -------------------- REFERENCES (APA Style) --------------------
+\clearpage
+\renewcommand{\bibname}{References}
+\addcontentsline{toc}{chapter}{References}
+\begin{thebibliography}{99}
+
+\bibitem{Amiri2022}
+Amiri, M., \& Pourghasemi, H. R. (2022). Mapping the NDVI and monitoring of its changes using Google Earth Engine and Sentinel-2 images. In H. R. Pourghasemi (Ed.), \textit{Computers in Earth and Environmental Sciences} (pp. 127--136). Elsevier. https://doi.org/10.1016/B978-0-323-89861-4.00044-0
+
+\bibitem{Anguluri2017}
+Anguluri, R., \& Narayanan, P. (2017). Role of green space in urban planning: Outlook towards smart cities. \textit{Urban Forestry \& Urban Greening, 25}, 58--65. https://doi.org/10.1016/j.ufug.2017.04.007
+
+\bibitem{Arfa2024}
+Arfa, A., \& Minaei, M. (2024). Utilizing multitemporal indices and spectral bands of Sentinel-2 to enhance land use and land cover classification with random forest and support vector machine. \textit{Advances in Space Research, 74}(11), 5580--5590. https://doi.org/10.1016/j.asr.2024.08.062
+
+\bibitem{Aryal2022}
+Aryal, J., Sitaula, C., \& Aryal, S. (2022). NDVI threshold-based urban green space mapping from Sentinel-2A at the local governmental area (LGA) level of Victoria, Australia. \textit{Land, 11}(3). https://doi.org/10.3390/land11030351
+
+\bibitem{Davis2023}
+Davis, Z., Nesbitt, L., Guhn, M., \& van den Bosch, M. (2023). Assessing changes in urban vegetation using Normalised Difference Vegetation Index (NDVI) for epidemiological studies. \textit{Urban Forestry \& Urban Greening, 88}, 128080. https://doi.org/10.1016/j.ufug.2023.128080
+
+\bibitem{Huang2021}
+Huang, S., Tang, L., Hupy, J. P., Wang, Y., \& Shao, G. (2021). A commentary review on the use of normalized difference vegetation index (NDVI) in the era of popular remote sensing. \textit{Journal of Forestry Research, 32}(1), 1--6. https://doi.org/10.1007/s11676-020-01155-1
+
+\bibitem{Jha2021}
+Jha, A. K., Ghimire, A., Thapa, S., Jha, A. M., \& Raj, R. (2021). A review of AI for urban planning: Towards building sustainable smart cities. In \textit{2021 6th International Conference on Inventive Computation Technologies (ICICT)} (pp. 937--944). IEEE. https://doi.org/10.1109/ICICT50816.2021.9358548
+
+\bibitem{Jiang2025}
+Jiang, W., Wen, Q., Liu, S., Liu, L., Luo, G., Cui, S., Sun, W., \& Yan, D. (2025). Quantifying the process of lake encroachment from the perspective of satellite remote sensing. \textit{Ecological Indicators, 176}, 113730. https://doi.org/10.1016/j.ecolind.2025.113730
+
+\bibitem{Kamaruzzaman2025}
+Kamaruzzaman, K., Salleh, S. A., Pardi, F., Abdullah, M. F., Foronda, V., Bergonio, E. L., \& Rahmawaty, R. (2025). Review of environmental monitoring in freshwater lakes using geospatial techniques (remote sensing and GIS). \textit{Geocarto International, 40}(1), 2448978. https://doi.org/10.1080/10106049.2024.2448978
+
+\bibitem{Kanniah2017}
+Kanniah, K. D. (2017). Quantifying green cover change for sustainable urban planning: A case of Kuala Lumpur, Malaysia. \textit{Urban Forestry \& Urban Greening, 27}, 287--304. https://doi.org/10.1016/j.ufug.2017.08.016
+
+\bibitem{Lasaponara2022}
+Lasaponara, R., Abate, N., Fattore, C., Aromando, A., Cardettini, G., \& Di Fonzo, M. (2022). On the use of Sentinel-2 NDVI time series and Google Earth Engine to detect land-use/land-cover changes in fire-affected areas. \textit{Remote Sensing, 14}(19). https://doi.org/10.3390/rs14194723
+
+\bibitem{Ramachandra2024}
+Ramachandra, T. V., Asulabha, K. S., Sincy, V., Baghel, A., \& Vinay, S. (2024). Bangalore Lakes Information System (BLIS) for sustainable management of lakes. \textit{Journal of the Indian Institute of Science, 104}(2), 415--434. https://doi.org/10.1007/s41745-024-00444-6
+
+\bibitem{Tahir2025}
+Tahir, Z., Haseeb, M., Mahmood, S. A., Batool, S., Abdullah-Al-Wadud, M., Ullah, S., \& Tariq, A. (2025). Predicting land use and land cover changes for sustainable land management using CA-Markov modelling and GIS techniques. \textit{Scientific Reports, 15}(1), 3271. https://doi.org/10.1038/s41598-025-87796-w
+
+\bibitem{Vijayaraghavalu2025}
+Vijayaraghavalu, S. S., Arumugam, K., \& Dange, S. (2025). Spatio-temporal dynamics of urbanization and environmental sustainability: A predictive modelling approach to forecasting land use transitions in Vellore, India. \textit{Results in Engineering, 27}, 106572. https://doi.org/10.1016/j.rineng.2025.106572
+
+\bibitem{Xi2023}
+Xi, Y., Liu, Y., Li, T., Ding, J., Zhang, Y., Tarkoma, S., Li, Y., \& Hui, P. (2023). A satellite imagery dataset for long-term sustainable development in United States cities. \textit{Scientific Data, 10}(1), 866. https://doi.org/10.1038/s41597-023-02576-3
+
+\end{thebibliography}
+
+
+
+% Appendices
+\appendix
+\chapter{Screenshots}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{output.jpeg} % Insert your actual diagram
+\caption{Results}
+\label{fig:output} 
+\end{figure}
+
+\end{document}

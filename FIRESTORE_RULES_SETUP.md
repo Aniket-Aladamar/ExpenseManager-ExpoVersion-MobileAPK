@@ -36,6 +36,25 @@ service cloud.firestore {
                        resource.data.userId == request.auth.uid;
     }
     
+    // Budgets collection - users can only access their own budgets
+    match /budgets/{budgetId} {
+      // Allow users to read their own budgets
+      allow read: if request.auth != null && 
+                     resource.data.userId == request.auth.uid;
+      
+      // Allow users to create budgets with their own userId
+      allow create: if request.auth != null && 
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Allow users to update their own budgets
+      allow update: if request.auth != null && 
+                       resource.data.userId == request.auth.uid;
+      
+      // Allow users to delete their own budgets
+      allow delete: if request.auth != null && 
+                       resource.data.userId == request.auth.uid;
+    }
+    
     // Users collection (if you add user profiles later)
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
