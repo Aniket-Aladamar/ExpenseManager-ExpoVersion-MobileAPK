@@ -13,7 +13,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../config/firebase';
 import Button from '../../components/common/Button';
@@ -23,6 +23,7 @@ import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import { EXPENSE_CATEGORIES, EXPENSE_TYPES } from '../../constants/categories';
+import { checkExpenseAgainstBudget } from '../../utils/budgetNotifications';
 
 const ExpenseSchema = Yup.object().shape({
   vendor: Yup.string().required('Vendor name is required'),
@@ -51,40 +52,102 @@ const AddExpenseScreen = ({ navigation }) => {
     },
     validationSchema: ExpenseSchema,
     onSubmit: async (values) => {
-      setLoading(true);
-      try {
-        let receiptUri = null;
+      // Check budget before submitting
+      if (values.category && values.amount) {
+        const budgetCheck = await checkExpenseAgainstBudget(
+          user.uid,
+          values.category,
+          values.amount
+        );
 
-        // Store receipt URI locally (no upload to Firebase Storage)
-        if (selectedImage || uploadedFile) {
-          const fileToUpload = selectedImage || uploadedFile;
-          receiptUri = fileToUpload.uri; // Just store the local URI
+        if (budgetCheck.hasBudget && budgetCheck.willExceed) {
+          Alert.alert(
+            '⚠️ Budget Alert',
+            `Adding this expense will exceed your ${budgetCheck.categoryName} budget!\n\n` +
+            `Current: ₹${budgetCheck.currentSpending.toFixed(2)}\n` +
+            `Budget: ₹${budgetCheck.budgetAmount.toFixed(2)}\n` +
+            `New Total: ₹${budgetCheck.newTotal.toFixed(2)}\n` +
+            `Over by: ₹${budgetCheck.overAmount.toFixed(2)}`,
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Add Anyway', onPress: () => proceedWithExpense(values) }
+            ]
+          );
+          return;
+        } else if (budgetCheck.hasBudget && budgetCheck.percentage >= 80) {
+          Alert.alert(
+            '💡 Budget Warning',
+            `This will bring you to ${budgetCheck.percentage.toFixed(0)}% of your ${budgetCheck.categoryName} budget.\n\n` +
+            `Budget: ₹${budgetCheck.budgetAmount.toFixed(2)}\n` +
+            `New Total: ₹${budgetCheck.newTotal.toFixed(2)}`,
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Continue', onPress: () => proceedWithExpense(values) }
+            ]
+          );
+          return;
         }
-
-        // Add expense to Firestore
-        await addDoc(collection(db, 'expenses'), {
-          userId: user.uid,
-          vendor: values.vendor,
-          amount: parseFloat(values.amount),
-          date: new Date(values.date),
-          category: values.category,
-          type: values.type,
-          description: values.description,
-          hasGST: values.hasGST,
-          gstAmount: values.hasGST ? parseFloat(values.gstAmount || 0) : 0,
-          receiptUrl: receiptUri, // Local URI instead of cloud URL
-          createdAt: new Date(),
-        });
-
-        Alert.alert('Success', 'Expense added successfully!');
-        navigation.goBack();
-      } catch (error) {
-        console.error('Error adding expense:', error);
-        Alert.alert('Error', 'Failed to add expense. Please try again.');
       }
-      setLoading(false);
+
+      await proceedWithExpense(values);
     },
   });
+
+  const proceedWithExpense = async (values) => {
+    // Additional validation
+    const amount = parseFloat(values.amount);
+    if (amount > 100000) {
+      Alert.alert(
+        'High Amount Warning',
+        'You are adding an expense over ₹1,00,000. Are you sure this is correct?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Continue', onPress: () => submitExpense(values) }
+        ]
+      );
+      return;
+    }
+    
+    await submitExpense(values);
+  };
+
+  const submitExpense = async (values) => {
+    setLoading(true);
+    try {
+      let receiptUri = null;
+
+      // Store receipt URI locally (no upload to Firebase Storage)
+      if (selectedImage || uploadedFile) {
+        const fileToUpload = selectedImage || uploadedFile;
+        receiptUri = fileToUpload.uri; // Just store the local URI
+      }
+
+      // Add expense to Firestore
+      await addDoc(collection(db, 'expenses'), {
+        userId: user.uid,
+        vendor: values.vendor,
+        amount: parseFloat(values.amount),
+        date: new Date(values.date),
+        category: values.category,
+        type: values.type,
+        description: values.description,
+        hasGST: values.hasGST,
+        gstAmount: values.hasGST ? parseFloat(values.gstAmount || 0) : 0,
+        receiptUrl: receiptUri, // Local URI instead of cloud URL
+        createdAt: new Date(),
+      });
+
+      Alert.alert(
+        '✅ Success!', 
+        `Expense of ₹${parseFloat(values.amount).toFixed(2)} added successfully!`,
+        [{ text: 'OK', onPress: () => navigation.goBack() }]
+      );
+    } catch (error) {
+      console.error('Error adding expense:', error);
+      Alert.alert('Error', 'Failed to add expense. Please try again.');
+      setLoading(false);
+    }
+  };
 
   const handleCameraLaunch = async () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
@@ -145,6 +208,14 @@ const AddExpenseScreen = ({ navigation }) => {
     <ScrollView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}>Add New Expense</Text>
+
+        {/* Quick Tip */}
+        <Card style={styles.tipCard}>
+          <Text style={styles.tipIcon}>💡</Text>
+          <Text style={styles.tipText}>
+            Tip: Always attach receipts for reimbursable expenses to speed up claims!
+          </Text>
+        </Card>
 
         {/* Upload Options */}
         <Card style={styles.uploadCard}>
@@ -331,6 +402,24 @@ const styles = StyleSheet.create({
     ...typography.h3,
     color: colors.text,
     marginBottom: spacing.lg,
+  },
+  tipCard: {
+    backgroundColor: colors.secondary + '10',
+    borderLeftWidth: 4,
+    borderLeftColor: colors.secondary,
+    marginBottom: spacing.md,
+    padding: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tipIcon: {
+    fontSize: 24,
+    marginRight: spacing.sm,
+  },
+  tipText: {
+    ...typography.body2,
+    color: colors.text,
+    flex: 1,
   },
   uploadCard: {
     marginBottom: spacing.md,

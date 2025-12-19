@@ -9,6 +9,8 @@ import {
   Alert,
   Image,
   Modal,
+  TextInput,
+  ScrollView,
 } from 'react-native';
 import { collection, query, where, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { format } from 'date-fns';
@@ -24,9 +26,13 @@ import { EXPENSE_CATEGORIES } from '../../constants/categories';
 const ExpenseListScreen = ({ navigation }) => {
   const { user } = useAuth();
   const [expenses, setExpenses] = useState([]);
+  const [filteredExpenses, setFilteredExpenses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('all'); // all, personal, business, reimbursable
   const [selectedImage, setSelectedImage] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('date'); // date, amount, vendor
+  const [categoryFilter, setCategoryFilter] = useState('all');
 
   const fetchExpenses = async () => {
     if (!user) return;
@@ -55,11 +61,48 @@ const ExpenseListScreen = ({ navigation }) => {
       });
 
       setExpenses(expensesData);
+      applyFiltersAndSort(expensesData);
     } catch (error) {
       console.error('Error fetching expenses:', error);
     }
     setLoading(false);
   };
+
+  const applyFiltersAndSort = (data) => {
+    let filtered = [...data];
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(
+        (exp) =>
+          exp.vendor.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          exp.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Apply category filter
+    if (categoryFilter !== 'all') {
+      filtered = filtered.filter((exp) => exp.category === categoryFilter);
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      if (sortBy === 'date') {
+        return getDateFromExpense(b) - getDateFromExpense(a);
+      } else if (sortBy === 'amount') {
+        return b.amount - a.amount;
+      } else if (sortBy === 'vendor') {
+        return a.vendor.localeCompare(b.vendor);
+      }
+      return 0;
+    });
+
+    setFilteredExpenses(filtered);
+  };
+
+  useEffect(() => {
+    applyFiltersAndSort(expenses);
+  }, [searchQuery, sortBy, categoryFilter, expenses]);
 
   useEffect(() => {
     fetchExpenses();
@@ -184,6 +227,83 @@ const ExpenseListScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search by vendor or description..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholderTextColor={colors.textLight}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <Text style={styles.clearButton}>✕</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Sort and Category Filter */}
+      <View style={styles.controlsRow}>
+        <View style={styles.sortContainer}>
+          <Text style={styles.controlLabel}>Sort:</Text>
+          <TouchableOpacity
+            style={[styles.sortButton, sortBy === 'date' && styles.sortButtonActive]}
+            onPress={() => setSortBy('date')}>
+            <Text style={[styles.sortText, sortBy === 'date' && styles.sortTextActive]}>
+              Date
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.sortButton, sortBy === 'amount' && styles.sortButtonActive]}
+            onPress={() => setSortBy('amount')}>
+            <Text style={[styles.sortText, sortBy === 'amount' && styles.sortTextActive]}>
+              Amount
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.sortButton, sortBy === 'vendor' && styles.sortButtonActive]}
+            onPress={() => setSortBy('vendor')}>
+            <Text style={[styles.sortText, sortBy === 'vendor' && styles.sortTextActive]}>
+              Vendor
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Category Pills */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.categoryScroll}
+        contentContainerStyle={styles.categoryScrollContent}>
+        <TouchableOpacity
+          style={[styles.categoryPill, categoryFilter === 'all' && styles.categoryPillActive]}
+          onPress={() => setCategoryFilter('all')}>
+          <Text style={[styles.categoryPillText, categoryFilter === 'all' && styles.categoryPillTextActive]}>
+            All Categories
+          </Text>
+        </TouchableOpacity>
+        {EXPENSE_CATEGORIES.map((cat) => (
+          <TouchableOpacity
+            key={cat.id}
+            style={[
+              styles.categoryPill,
+              categoryFilter === cat.id && styles.categoryPillActive,
+              categoryFilter === cat.id && { borderColor: cat.color },
+            ]}
+            onPress={() => setCategoryFilter(cat.id)}>
+            <Text
+              style={[
+                styles.categoryPillText,
+                categoryFilter === cat.id && styles.categoryPillTextActive,
+              ]}>
+              {cat.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
       {/* Filter Tabs */}
       <View style={styles.filterContainer}>
         <TouchableOpacity
@@ -232,8 +352,18 @@ const ExpenseListScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
+      {/* Stats Summary */}
+      <View style={styles.statsBar}>
+        <Text style={styles.statsText}>
+          Showing {filteredExpenses.length} of {expenses.length} expenses
+        </Text>
+        <Text style={styles.statsText}>
+          Total: ₹{filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0).toFixed(2)}
+        </Text>
+      </View>
+
       <FlatList
-        data={expenses}
+        data={filteredExpenses}
         renderItem={renderExpense}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
@@ -242,8 +372,19 @@ const ExpenseListScreen = ({ navigation }) => {
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No expenses found</Text>
-            <Text style={styles.emptySubtext}>Add your first expense to get started</Text>
+            <Text style={styles.emptyIcon}>
+              {searchQuery || categoryFilter !== 'all' ? '🔍' : '💰'}
+            </Text>
+            <Text style={styles.emptyText}>
+              {searchQuery || categoryFilter !== 'all'
+                ? 'No expenses match your filters'
+                : 'No expenses found'}
+            </Text>
+            <Text style={styles.emptySubtext}>
+              {searchQuery || categoryFilter !== 'all'
+                ? 'Try adjusting your search or filters'
+                : 'Add your first expense to get started'}
+            </Text>
           </View>
         }
       />
@@ -280,6 +421,102 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    margin: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: spacing.sm,
+    ...typography.body1,
+    color: colors.text,
+  },
+  clearButton: {
+    fontSize: 20,
+    color: colors.textLight,
+    paddingLeft: spacing.sm,
+  },
+  controlsRow: {
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  controlLabel: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginBottom: spacing.xs,
+  },
+  sortContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  sortButton: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginLeft: spacing.xs,
+  },
+  sortButtonActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  sortText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+  },
+  sortTextActive: {
+    color: colors.surface,
+    fontWeight: '600',
+  },
+  categoryScroll: {
+    maxHeight: 50,
+    marginBottom: spacing.sm,
+  },
+  categoryScrollContent: {
+    paddingHorizontal: spacing.md,
+    gap: spacing.xs,
+  },
+  categoryPill: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginRight: spacing.xs,
+  },
+  categoryPillActive: {
+    backgroundColor: colors.primary + '10',
+    borderColor: colors.primary,
+  },
+  categoryPillText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+  },
+  categoryPillTextActive: {
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  statsBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  statsText: {
+    ...typography.caption,
+    color: colors.textSecondary,
   },
   filterContainer: {
     flexDirection: 'row',
@@ -402,6 +639,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: spacing.xxl,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: spacing.md,
   },
   emptyText: {
     ...typography.h6,

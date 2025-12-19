@@ -17,10 +17,12 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../config/firebase';
 import Card from '../../components/common/Card';
+import BudgetNotification from '../../components/common/BudgetNotification';
 import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import { EXPENSE_CATEGORIES } from '../../constants/categories';
+import { checkBudgetStatus } from '../../utils/budgetNotifications';
 
 const { width } = Dimensions.get('window');
 
@@ -29,11 +31,17 @@ const DashboardScreen = ({ navigation }) => {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [budgetWarnings, setBudgetWarnings] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(true);
   const [stats, setStats] = useState({
     totalThisMonth: 0,
     totalExpenses: 0,
     reimbursable: 0,
     categoryBreakdown: [],
+    lastMonthTotal: 0,
+    monthlyChange: 0,
+    averagePerDay: 0,
+    topCategory: null,
   });
 
   const fetchExpenses = async () => {
@@ -56,10 +64,22 @@ const DashboardScreen = ({ navigation }) => {
 
       setExpenses(expensesData);
       calculateStats(expensesData);
+      
+      // Check budget status
+      checkBudgets();
     } catch (error) {
       console.error('Error fetching expenses:', error);
     }
     setLoading(false);
+  };
+
+  const checkBudgets = async () => {
+    if (!user) return;
+    const status = await checkBudgetStatus(user.uid);
+    if (status.warnings.length > 0) {
+      setBudgetWarnings(status.warnings);
+      setShowNotifications(true);
+    }
   };
 
   const calculateStats = (expensesData) => {
@@ -72,7 +92,25 @@ const DashboardScreen = ({ navigation }) => {
       return expenseDate >= startDate && expenseDate <= endDate;
     });
 
+    // Last month calculations
+    const lastMonthStart = startOfMonth(new Date(new Date().setMonth(new Date().getMonth() - 1)));
+    const lastMonthEnd = endOfMonth(new Date(new Date().setMonth(new Date().getMonth() - 1)));
+    
+    const lastMonthExpenses = expensesData.filter(exp => {
+      const expenseDate = getDateFromExpense(exp);
+      return expenseDate >= lastMonthStart && expenseDate <= lastMonthEnd;
+    });
+
     const totalThisMonth = thisMonthExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+    const lastMonthTotal = lastMonthExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+    
+    const monthlyChange = lastMonthTotal > 0 
+      ? ((totalThisMonth - lastMonthTotal) / lastMonthTotal * 100) 
+      : 0;
+
+    const daysInMonth = new Date().getDate();
+    const averagePerDay = daysInMonth > 0 ? totalThisMonth / daysInMonth : 0;
+
     const reimbursable = expensesData
       .filter((exp) => exp.type === 'reimbursable')
       .reduce((sum, exp) => sum + exp.amount, 0);
@@ -98,11 +136,20 @@ const DashboardScreen = ({ navigation }) => {
       };
     });
 
+    // Find top category
+    const topCategory = categoryBreakdown.length > 0 
+      ? categoryBreakdown.reduce((max, cat) => cat.amount > max.amount ? cat : max)
+      : null;
+
     setStats({
       totalThisMonth,
       totalExpenses: expensesData.length,
       reimbursable,
       categoryBreakdown,
+      lastMonthTotal,
+      monthlyChange,
+      averagePerDay,
+      topCategory,
     });
   };
 
@@ -154,6 +201,16 @@ const DashboardScreen = ({ navigation }) => {
     <ScrollView
       style={styles.container}
       refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchExpenses} />}>
+      
+      {/* Budget Notifications */}
+      {showNotifications && budgetWarnings.length > 0 && (
+        <BudgetNotification
+          warnings={budgetWarnings}
+          onDismiss={() => setShowNotifications(false)}
+          onViewDetails={() => navigation.navigate('Profile')}
+        />
+      )}
+
       <View style={styles.header}>
         <Text style={styles.greeting}>Hello, {user?.displayName || 'User'}!</Text>
         <Text style={styles.date}>{format(new Date(), 'MMMM yyyy')}</Text>
@@ -176,6 +233,30 @@ const DashboardScreen = ({ navigation }) => {
         <Text style={[styles.summaryAmount, { color: colors.secondary }]}>
           ₹{stats.reimbursable.toFixed(2)}
         </Text>
+      </Card>
+
+      {/* Insights Section */}
+      <Card style={styles.insightsCard}>
+        <Text style={styles.insightsTitle}>📊 Monthly Insights</Text>
+        <View style={styles.insightRow}>
+          <Text style={styles.insightLabel}>vs Last Month:</Text>
+          <Text style={[
+            styles.insightValue,
+            { color: stats.monthlyChange > 0 ? colors.error : colors.success }
+          ]}>
+            {stats.monthlyChange > 0 ? '↑' : '↓'} {Math.abs(stats.monthlyChange).toFixed(1)}%
+          </Text>
+        </View>
+        <View style={styles.insightRow}>
+          <Text style={styles.insightLabel}>Daily Average:</Text>
+          <Text style={styles.insightValue}>₹{stats.averagePerDay.toFixed(2)}</Text>
+        </View>
+        {stats.topCategory && (
+          <View style={styles.insightRow}>
+            <Text style={styles.insightLabel}>Top Category:</Text>
+            <Text style={styles.insightValue}>{stats.topCategory.name} (₹{stats.topCategory.amount.toFixed(2)})</Text>
+          </View>
+        )}
       </Card>
 
       {/* Category Breakdown */}
@@ -336,6 +417,32 @@ const styles = StyleSheet.create({
   summaryAmount: {
     ...typography.h3,
     color: colors.primary,
+  },
+  insightsCard: {
+    margin: spacing.lg,
+    marginTop: spacing.md,
+    padding: spacing.md,
+    backgroundColor: colors.primary + '08',
+  },
+  insightsTitle: {
+    ...typography.h6,
+    color: colors.text,
+    marginBottom: spacing.md,
+  },
+  insightRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+  },
+  insightLabel: {
+    ...typography.body2,
+    color: colors.textSecondary,
+  },
+  insightValue: {
+    ...typography.subtitle1,
+    color: colors.text,
+    fontWeight: '600',
   },
   chartCard: {
     margin: spacing.lg,

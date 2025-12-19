@@ -12,6 +12,7 @@ import {
   FlatList,
 } from 'react-native';
 import { collection, addDoc, query, where, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../config/firebase';
 import Card from '../../components/common/Card';
@@ -40,12 +41,32 @@ const ProfileScreen = ({ navigation }) => {
   const [editingBudgetId, setEditingBudgetId] = useState(null);
   const [budgetLoading, setBudgetLoading] = useState(false);
   const [monthlySpending, setMonthlySpending] = useState({});
+  const [spendingLoading, setSpendingLoading] = useState(false);
 
   useEffect(() => {
     fetchCurrencyList();
     fetchBudgets();
     fetchMonthlySpending();
   }, []);
+
+  // Refresh spending data when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (user) {
+        fetchMonthlySpending();
+        fetchBudgets();
+      }
+      return () => {};
+    }, [user])
+  );
+
+  // Refresh spending when budget modal opens
+  useEffect(() => {
+    if (showBudgetModal && user) {
+      fetchMonthlySpending();
+      fetchBudgets();
+    }
+  }, [showBudgetModal]);
 
   const fetchCurrencyList = async () => {
     try {
@@ -120,6 +141,7 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const fetchMonthlySpending = async () => {
+    setSpendingLoading(true);
     try {
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -144,6 +166,8 @@ const ProfileScreen = ({ navigation }) => {
       setMonthlySpending(spending);
     } catch (error) {
       console.error('Error fetching monthly spending:', error);
+    } finally {
+      setSpendingLoading(false);
     }
   };
 
@@ -164,7 +188,17 @@ const ProfileScreen = ({ navigation }) => {
         await updateDoc(doc(db, 'budgets', editingBudgetId), {
           amount: parseFloat(budgetAmount),
         });
-        Alert.alert('Success', 'Budget updated successfully');
+        
+        // Check if already over budget with new amount
+        const spent = monthlySpending[selectedCategory] || 0;
+        if (spent > parseFloat(budgetAmount)) {
+          Alert.alert(
+            '⚠️ Budget Exceeded', 
+            `You've already spent ₹${spent.toFixed(2)} this month, which exceeds your new budget of ₹${parseFloat(budgetAmount).toFixed(2)}!`
+          );
+        } else {
+          Alert.alert('Success', 'Budget updated successfully');
+        }
       } else {
         // Check if budget already exists for this category
         const existing = budgets.find(b => b.category === selectedCategory);
@@ -181,7 +215,17 @@ const ProfileScreen = ({ navigation }) => {
           amount: parseFloat(budgetAmount),
           createdAt: new Date(),
         });
-        Alert.alert('Success', 'Budget created successfully');
+        
+        // Check if already over budget
+        const spent = monthlySpending[selectedCategory] || 0;
+        if (spent > parseFloat(budgetAmount)) {
+          Alert.alert(
+            '⚠️ Already Over Budget!', 
+            `You've already spent ₹${spent.toFixed(2)} this month, which exceeds your budget of ₹${parseFloat(budgetAmount).toFixed(2)}!`
+          );
+        } else {
+          Alert.alert('Success', 'Budget created successfully');
+        }
       }
       
       await fetchBudgets();
@@ -363,7 +407,18 @@ const ProfileScreen = ({ navigation }) => {
         }}>
         <View style={styles.modalContainer}>
           <ScrollView style={styles.budgetModalContent}>
-            <Text style={styles.modalTitle}>💰 Monthly Budget</Text>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>💰 Monthly Budget</Text>
+              <TouchableOpacity
+                onPress={async () => {
+                  await fetchMonthlySpending();
+                  await fetchBudgets();
+                  Alert.alert('✅ Refreshed', 'Budget data updated successfully!');
+                }}
+                style={styles.refreshButton}>
+                <Text style={styles.refreshButtonText}>🔄 Refresh</Text>
+              </TouchableOpacity>
+            </View>
             
             {/* Budget Form */}
             <View style={styles.budgetForm}>
@@ -422,7 +477,12 @@ const ProfileScreen = ({ navigation }) => {
 
             {/* Budget List */}
             <View style={styles.budgetList}>
-              <Text style={styles.sectionTitle}>Your Budgets</Text>
+              <View style={styles.budgetListHeader}>
+                <Text style={styles.sectionTitle}>Your Budgets</Text>
+                {spendingLoading && (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                )}
+              </View>
               
               {budgets.length === 0 ? (
                 <View style={styles.emptyState}>
@@ -731,11 +791,30 @@ const styles = StyleSheet.create({
     width: '90%',
     height: '80%',
   },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
   modalTitle: {
     ...typography.h4,
     color: colors.text,
-    marginBottom: spacing.lg,
     textAlign: 'center',
+    flex: 1,
+  },
+  refreshButton: {
+    backgroundColor: colors.primary + '10',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  refreshButtonText: {
+    ...typography.caption,
+    color: colors.primary,
+    fontWeight: '600',
   },
   converterSection: {
     marginBottom: spacing.lg,
@@ -853,6 +932,12 @@ const styles = StyleSheet.create({
   },
   budgetList: {
     marginBottom: spacing.lg,
+  },
+  budgetListHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
   },
   emptyState: {
     alignItems: 'center',
